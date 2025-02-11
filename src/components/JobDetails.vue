@@ -1,108 +1,140 @@
 <template>
-  <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
-    <div class="bg-white rounded-lg shadow-xl w-full max-w-2xl">
-      <div class="p-6">
-        <h2 class="text-xl font-bold mb-4">Job Details</h2>
-        
+  <ModalWrapper>
+    <div class="bg-white rounded-lg shadow-xl w-full max-w-xl max-h-[90vh] flex flex-col">
+      <div class="p-4 flex-1 overflow-y-auto">
         <!-- Job Information -->
-        <div class="grid grid-cols-2 gap-4 mb-6">
-          <div>
-            <label class="block text-sm font-medium text-gray-700">Job ID</label>
-            <p class="mt-1">{{ job.job_number }}</p>
+        <div class="space-y-4">
+          <!-- Header -->
+          <div class="flex items-center justify-between mb-2">
+            <h2 class="text-xl font-bold">Job Details</h2>
+            <span class="text-sm text-gray-500">ID: {{ job.job_number }}</span>
           </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-700">Job Title</label>
-            <p class="mt-1">{{ job.description }}</p>
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-700">Client</label>
-            <p class="mt-1">{{ job.customer }}</p>
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-700">Location</label>
-            <p class="mt-1">{{ job.location }}</p>
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-700">Start Date</label>
-            <p class="mt-1">{{ formatDate(job.start_date) }}</p>
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-700">End Date</label>
-            <p class="mt-1">{{ formatDate(job.end_date) }}</p>
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-700">Status</label>
-            <select 
-              v-model="job.status"
-              class="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
-            >
-              <option value="Pending">Pending</option>
-              <option value="In Progress">In Progress</option>
-              <option value="Completed">Completed</option>
-            </select>
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-700">Total Cost</label>
-            <p class="mt-1">{{ formatCurrency(totalCost) }}</p>
-          </div>
-        </div>
 
-        <!-- Progress Section -->
-        <div class="mb-6">
-          <label class="block text-sm font-medium text-gray-700 mb-2">Progress</label>
-          <div class="bg-gray-200 rounded-full h-2.5">
-            <div 
-              class="bg-blue-600 h-2.5 rounded-full" 
-              :style="{ width: `${progress}%` }"
-            ></div>
+          <!-- Editable Fields Section -->
+          <div class="bg-blue-50 p-3 rounded-lg border border-blue-100">
+            <div class="grid grid-cols-2 gap-3">
+              <!-- Status Field -->
+              <div>
+                <label class="block text-sm font-medium text-blue-900">Status</label>
+                <select
+                  v-model="localStatus"
+                  class="mt-1 block w-full rounded-md border-blue-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                  @change="handleStatusChange"
+                >
+                  <option value="Pending">Pending</option>
+                  <option value="In Progress">In Progress</option>
+                  <option value="Completed">Completed</option>
+                </select>
+              </div>
+              
+              <!-- Progress Field -->
+              <div>
+                <label class="block text-sm font-medium text-blue-900">Progress</label>
+                <div class="mt-1 block w-full">
+                  <div class="flex items-center gap-2 h-[38px] rounded-md border border-blue-300 shadow-sm bg-white px-3">
+                    <input
+                      type="range"
+                      v-model.number="localProgress"
+                      min="0"
+                      max="100"
+                      step="5"
+                      class="flex-1 h-2 bg-blue-200 rounded-lg appearance-none cursor-pointer"
+                      @input="handleProgressChange"
+                    >
+                    <span class="text-sm font-medium text-blue-900 w-12 text-right">{{ localProgress }}%</span>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
-          <p class="text-sm text-gray-500 mt-1">{{ progress }}% Complete</p>
-        </div>
 
-        <!-- To-Do List -->
-        <div class="mb-6">
-          <h3 class="text-lg font-medium mb-2">Tasks</h3>
-          <div class="space-y-2">
-            <div 
-              v-for="(task, index) in tasks" 
-              :key="index"
-              class="flex items-center"
-            >
-              <input 
-                type="checkbox" 
-                v-model="task.completed"
-                class="mr-2"
-                @change="updateProgress"
-              >
-              <span :class="{ 'line-through': task.completed }">
-                {{ task.description }}
-              </span>
+          <!-- Main Content Grid -->
+          <div class="grid grid-cols-2 gap-3">
+            <!-- Left Column -->
+            <div class="space-y-3">
+              <div>
+                <label class="block text-xs font-medium text-gray-500">Job Title</label>
+                <p class="text-sm text-gray-900">{{ job.description }}</p>
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-gray-500">Client</label>
+                <p class="text-sm text-gray-900">{{ job.customer }}</p>
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-gray-500">Location</label>
+                <p class="text-sm text-gray-900">{{ job.location }}</p>
+              </div>
+            </div>
+
+            <!-- Right Column -->
+            <div class="space-y-3">
+              <div>
+                <label class="block text-xs font-medium text-gray-500">Start Date</label>
+                <p class="text-sm text-gray-900">{{ formatDate(job.start_date) }}</p>
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-gray-500">End Date</label>
+                <p class="text-sm text-gray-900">{{ formatDate(job.end_date) }}</p>
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-gray-500">Payment Status</label>
+                <span :class="paymentStatusClass(job.payment_type)">
+                  {{ job.payment_type }}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Financial Information -->
+          <div class="bg-gray-50 p-3 rounded-lg border border-gray-200">
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs font-medium text-gray-500">Material Expense</label>
+                <p class="text-sm text-gray-900">{{ formatCurrency(job.material_expense || 0) }}</p>
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-gray-500">Man Power</label>
+                <p class="text-sm text-gray-900">{{ formatCurrency(job.man_power || 0) }}</p>
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-gray-500">Commissions</label>
+                <p class="text-sm text-gray-900">{{ formatCurrency(job.commissions_expense || 0) }}</p>
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-gray-500">Total Cost</label>
+                <p class="text-sm text-gray-900 font-semibold">{{ formatCurrency(totalCost) }}</p>
+              </div>
             </div>
           </div>
         </div>
 
         <!-- Actions -->
-        <div class="flex justify-end space-x-4">
-          <button 
+        <div class="flex justify-end space-x-2 p-3 border-t border-gray-200">
+          <button
             @click="closeModal"
-            class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200"
+            class="px-3 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200"
           >
             Close
           </button>
-          <button 
+          <button
             @click="saveChanges"
-            class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700"
+            class="px-3 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700"
           >
-            Save Changes
+            Save
           </button>
         </div>
       </div>
     </div>
-  </div>
+  </ModalWrapper>
 </template>
 
 <script>
+import ModalWrapper from './ModalWrapper.vue'
+
 export default {
+  components: {
+    ModalWrapper
+  },
   props: {
     job: {
       type: Object,
@@ -111,25 +143,24 @@ export default {
   },
   data() {
     return {
-      tasks: [
-        { description: 'Initial Consultation', completed: false },
-        { description: 'Project Planning', completed: false },
-        { description: 'Material Procurement', completed: false },
-        { description: 'Execution', completed: false },
-        { description: 'Quality Check', completed: false },
-        { description: 'Final Delivery', completed: false }
-      ]
+      localProgress: this.job.progress || 0,
+      localStatus: this.job.status || 'Pending',
+      hasChanges: false
     }
   },
   computed: {
     totalCost() {
-      return (this.job.material_expense || 0) + 
-             (this.job.man_power || 0) + 
+      return (this.job.material_expense || 0) +
+             (this.job.man_power || 0) +
              (this.job.commissions_expense || 0)
+    }
+  },
+  watch: {
+    'job.progress'(newVal) {
+      this.localProgress = newVal
     },
-    progress() {
-      const completed = this.tasks.filter(t => t.completed).length
-      return Math.round((completed / this.tasks.length) * 100)
+    'job.status'(newVal) {
+      this.localStatus = newVal
     }
   },
   methods: {
@@ -143,19 +174,38 @@ export default {
     formatDate(date) {
       return new Date(date).toLocaleDateString()
     },
-    updateProgress() {
-      this.$emit('update-progress', this.progress)
+    paymentStatusClass(status) {
+      return {
+        'px-2 py-1 rounded-full text-sm': true,
+        'bg-green-100 text-green-800': status === 'Paid',
+        'bg-red-100 text-red-800': status === 'Unpaid',
+        'bg-yellow-100 text-yellow-800': status === 'Pending'
+      }
+    },
+    handleProgressChange() {
+      this.hasChanges = true
+      this.$emit('update-progress', this.localProgress)
+    },
+    handleStatusChange() {
+      this.hasChanges = true
+      this.$emit('update-status', this.localStatus)
     },
     closeModal() {
-      this.$emit('close')
+      if (this.hasChanges) {
+        if (confirm('You have unsaved changes. Are you sure you want to close?')) {
+          this.$emit('close')
+        }
+      } else {
+        this.$emit('close')
+      }
     },
     async saveChanges() {
       try {
-        // Update job status and progress in database
         await this.$emit('save', {
-          status: this.job.status,
-          progress: this.progress
+          status: this.localStatus,
+          progress: this.localProgress
         })
+        this.hasChanges = false
         this.closeModal()
       } catch (error) {
         console.error('Error saving changes:', error)
@@ -164,10 +214,3 @@ export default {
   }
 }
 </script>
-
-<style scoped>
-.line-through {
-  text-decoration: line-through;
-  color: #6b7280;
-}
-</style>

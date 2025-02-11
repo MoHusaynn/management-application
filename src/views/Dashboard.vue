@@ -108,8 +108,8 @@
                   <td class="px-4 py-3 text-sm">{{ formatDate(job.start_date) }}</td>
                   <td class="px-4 py-3 text-sm">{{ formatDate(job.end_date) }}</td>
                   <td class="px-4 py-3">
-                    <span :class="statusClass(job.payment_type === 'Paid' ? 'Completed' : 'Pending')">
-                      {{ job.payment_type === 'Paid' ? 'Completed' : 'Pending' }}
+                    <span :class="statusClass(job.status)">
+                      {{ job.status }}
                     </span>
                   </td>
                   <td class="px-4 py-3 text-sm">{{ formatCurrency((job.material_expense || 0) + (job.man_power || 0) + (job.commissions_expense || 0)) }}</td>
@@ -145,6 +145,7 @@
       :job="selectedJob"
       @close="showDetailsModal = false"
       @update-progress="handleProgressUpdate"
+      @update-status="handleStatusUpdate"
       @save="handleSaveChanges"
     />
   </transition>
@@ -168,7 +169,9 @@ export default {
       },
       locations: [],
       statuses: ['Open', 'In Progress', 'Completed'],
-      paymentStatuses: ['Paid', 'Unpaid', 'Pending']
+      paymentStatuses: ['Paid', 'Unpaid', 'Pending'],
+      showDetailsModal: false,
+      selectedJob: null
     }
   },
   computed: {
@@ -240,7 +243,14 @@ export default {
       };
     },
     handleProgressUpdate(progress) {
-      this.selectedJob.progress = progress
+      if (this.selectedJob) {
+        this.selectedJob.progress = progress
+      }
+    },
+    handleStatusUpdate(status) {
+      if (this.selectedJob) {
+        this.selectedJob.status = status
+      }
     },
     async handleSaveChanges({ status, progress }) {
       try {
@@ -253,8 +263,14 @@ export default {
         
         // Update local job data
         const jobIndex = this.jobs.findIndex(j => j.job_number === this.selectedJob.job_number)
-        this.jobs[jobIndex].status = status
-        this.jobs[jobIndex].progress = progress
+        if (jobIndex !== -1) {
+          // Create a new object to ensure reactivity
+          const updatedJob = { ...this.jobs[jobIndex], status, progress }
+          this.$set(this.jobs, jobIndex, updatedJob)
+          
+          // Update selectedJob to reflect changes
+          this.selectedJob = updatedJob
+        }
       } catch (error) {
         console.error('Error updating job:', error)
       }
