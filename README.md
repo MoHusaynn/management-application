@@ -1,6 +1,6 @@
 # Data Management Application
 
-A comprehensive management application built with Flask and Supabase, designed to handle various management tasks efficiently. (This is not the Final Application. This project is actively being worked on).
+A comprehensive management application built with Vue.js, TailwindCSS, and Supabase, designed to handle various management tasks efficiently. This application can run both as a web application and desktop application using Electron. (This is not the Final Application. This project is actively being worked on).
 
 ## Features
 
@@ -12,14 +12,23 @@ A comprehensive management application built with Flask and Supabase, designed t
 
 ## Dependencies
 
-The application requires the following packages to run:
+The application requires the following core packages:
 
-- Flask
-- Flask-CORS
-- Flask-SQLAlchemy
-- requests
-- python-dotenv
+### Frontend
+- Vue.js 3
+- Vue Router
+- TailwindCSS
+- Notiwind (for notifications)
+
+### Backend & Database
 - @supabase/supabase-js
+- SQLite (for local data storage)
+
+### Build Tools & Development
+- Vite
+- Electron (for desktop application)
+- PostCSS
+- Various polyfills and utilities
 
 ## Description
 
@@ -37,12 +46,19 @@ The application is built using modern web technologies and follows best practice
 1. Clone the repository
 2. Install dependencies:
    ```bash
-   pip install -r requirements.txt
+   npm install
    ```
 3. Configure your Supabase integration (see Supabase setup instructions below)
 4. Run the application:
    ```bash
-   flask run
+   # For web development
+   npm run dev
+   
+   # For electron development
+   npm run electron:serve
+   
+   # For building electron app
+   npm run electron:build
    ```
 
 ## Supabase Database Setup Instructions
@@ -56,30 +72,24 @@ The application is built using modern web technologies and follows best practice
 ### 2. Configure Environment Variables
 Create a `.env` file in your project root with the following content:
 ```env
-VUE_APP_SUPABASE_URL=your-supabase-url
-VUE_APP_SUPABASE_KEY=your-supabase-anon-key
+VITE_SUPABASE_URL=your-supabase-url
+VITE_SUPABASE_KEY=your-supabase-anon-key
 ```
 
 Replace the values with your actual Supabase project URL and anon/public key.
 
-### 3. Install Supabase Client
-If not already installed, add the Supabase client to your project:
-```bash
-npm install @supabase/supabase-js
-```
-
-### 4. Configure Supabase Client
-Ensure you have a `src/supabase.js` file with the following content:
+### 3. Configure Supabase Client
+The project already includes Supabase client configuration in `src/supabase.js`:
 ```javascript
 import { createClient } from '@supabase/supabase-js'
 
-const supabaseUrl = process.env.VUE_APP_SUPABASE_URL
-const supabaseKey = process.env.VUE_APP_SUPABASE_KEY
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
+const supabaseKey = import.meta.env.VITE_SUPABASE_KEY
 
 export const supabase = createClient(supabaseUrl, supabaseKey)
 ```
 
-### 5. Test the Integration
+### 4. Test the Integration
 The JobEntry form should now be fully integrated with Supabase. When submitting a job, it will:
 - Generate sequential job and invoice numbers
 - Store all job data in the Supabase database
@@ -98,3 +108,4 @@ The application provides:
 - Scalable architecture
 - User-friendly interface
 - Comprehensive error handling
+- Cross-platform support (web and desktop)
