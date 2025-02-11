@@ -1,6 +1,6 @@
 # Data Management Application
 
-A comprehensive management application built with Flask and Supabase, designed to handle various management tasks efficiently.
+A comprehensive management application built with Flask and Supabase, designed to handle various management tasks efficiently. (This is not the Final Application. This project is actively being worked on).
 
 ## Features
 
