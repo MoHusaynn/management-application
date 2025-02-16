@@ -1,4 +1,9 @@
--- Create jobs table
+-- Drop existing sequences and tables if they exist
+DROP SEQUENCE IF EXISTS job_number_seq;
+DROP SEQUENCE IF EXISTS invoice_number_seq;
+DROP TABLE IF EXISTS jobs;
+
+-- Create jobs table with all fields including computed values
 CREATE TABLE jobs (
     id SERIAL PRIMARY KEY,
     job_number TEXT NOT NULL,
@@ -18,11 +23,16 @@ CREATE TABLE jobs (
     man_power NUMERIC NOT NULL,
     commissions_expense NUMERIC NOT NULL,
     paid NUMERIC NOT NULL,
+    total_expense NUMERIC NOT NULL,
+    total_amount NUMERIC NOT NULL,
+    balance NUMERIC NOT NULL,
+    status TEXT DEFAULT 'Open',
+    progress INTEGER DEFAULT 0,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Create sequence for job numbers
-CREATE SEQUENCE job_number_seq;
+CREATE SEQUENCE job_number_seq START 1;
 
 -- Create function to generate job numbers
 CREATE OR REPLACE FUNCTION increment_job_number()
@@ -36,7 +46,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- Create sequence for invoice numbers
-CREATE SEQUENCE invoice_number_seq;
+CREATE SEQUENCE invoice_number_seq START 1;
 
 -- Create function to generate invoice numbers
 CREATE OR REPLACE FUNCTION increment_invoice_number()
