@@ -86,8 +86,8 @@
                   <th class="px-4 py-3 text-left text-base font-bold text-gray-500 uppercase tracking-wider font-poppins">Job Title</th>
                   <th class="px-4 py-3 text-left text-base font-bold text-gray-500 uppercase tracking-wider font-poppins">Client</th>
                   <th class="px-4 py-3 text-left text-base font-bold text-gray-500 uppercase tracking-wider font-poppins">Location</th>
-                  <th class="px-4 py-3 text-left text-base font-bold text-gray-500 uppercase tracking-wider font-poppins">Start Date</th>
-                  <th class="px-4 py-3 text-left text-base font-bold text-gray-500 uppercase tracking-wider font-poppins">End Date</th>
+                  <th class="px-4 py-3 text-left text-base font-bold text-gray-500 uppercase tracking-wider font-poppins">Opening Date</th>
+                  <th class="px-4 py-3 text-left text-base font-bold text-gray-500 uppercase tracking-wider font-poppins">Date</th>
                   <th class="px-4 py-3 text-left text-base font-bold text-gray-500 uppercase tracking-wider font-poppins">Status</th>
                   <th class="px-4 py-3 text-left text-base font-bold text-gray-500 uppercase tracking-wider font-poppins">Total Cost</th>
                   <th class="px-4 py-3 text-left text-base font-bold text-gray-500 uppercase tracking-wider font-poppins">Payment Status</th>
@@ -105,8 +105,8 @@
                   <td class="px-4 py-3 text-sm max-w-[200px] truncate">{{ job.description }}</td>
                   <td class="px-4 py-3 text-sm">{{ job.customer }}</td>
                   <td class="px-4 py-3 text-sm">{{ job.location }}</td>
-                  <td class="px-4 py-3 text-sm">{{ formatDate(job.start_date) }}</td>
-                  <td class="px-4 py-3 text-sm">{{ formatDate(job.end_date) }}</td>
+                  <td class="px-4 py-3 text-sm">{{ formatDate(job.job_opening_day) }}</td>
+                  <td class="px-4 py-3 text-sm">{{ formatDate(job.date) }}</td>
                   <td class="px-4 py-3">
                     <span :class="statusClass(job.status)">
                       {{ job.status }}
@@ -168,7 +168,7 @@ export default {
         paymentStatus: ''
       },
       locations: [],
-      statuses: ['Open', 'In Progress', 'Completed'],
+      statuses: ['Open', 'Active', 'Completed'],
       paymentStatuses: ['Paid', 'Unpaid', 'Pending'],
       showDetailsModal: false,
       selectedJob: null
@@ -230,7 +230,7 @@ export default {
       return {
         'px-2 py-1 rounded-full text-sm': true,
         'bg-yellow-100 text-yellow-800': status === 'Pending',
-        'bg-blue-100 text-blue-800': status === 'In Progress',
+        'bg-blue-500 text-white': status === 'Active',
         'bg-green-100 text-green-800': status === 'Completed'
       }
     },
@@ -244,32 +244,72 @@ export default {
     },
     handleProgressUpdate(progress) {
       if (this.selectedJob) {
-        this.selectedJob.progress = progress
+        const jobIndex = this.jobs.findIndex(j => j.job_number === this.selectedJob.job_number)
+        if (jobIndex !== -1) {
+          // Update both the jobs array and selectedJob
+          const updatedJobs = [...this.jobs]
+          updatedJobs[jobIndex] = { ...this.jobs[jobIndex], progress }
+          this.jobs = updatedJobs
+          this.selectedJob = { ...this.selectedJob, progress }
+        }
       }
     },
     handleStatusUpdate(status) {
       if (this.selectedJob) {
-        this.selectedJob.status = status
+        const jobIndex = this.jobs.findIndex(j => j.job_number === this.selectedJob.job_number)
+        if (jobIndex !== -1) {
+          // Update both the jobs array and selectedJob
+          const updatedJobs = [...this.jobs]
+          updatedJobs[jobIndex] = { ...this.jobs[jobIndex], status }
+          this.jobs = updatedJobs
+          this.selectedJob = { ...this.selectedJob, status }
+        }
       }
     },
     async handleSaveChanges({ status, progress }) {
       try {
-        const { error } = await supabase
+        console.log('Saving changes:', { status, progress });
+        
+        // First update the database with all necessary fields
+        const updateData = {
+          status,
+          progress,
+          // Preserve existing data
+          ...this.selectedJob,
+          // Remove any Vue reactivity artifacts
+          _value: undefined,
+          __v_isRef: undefined
+        };
+        
+        const { data, error } = await supabase
           .from('jobs')
-          .update({ status, progress })
+          .update(updateData)
           .eq('job_number', this.selectedJob.job_number)
+          .select('*')
+          .single();
         
-        if (error) throw error
+        if (error) {
+          console.error('Error updating job:', error);
+          throw error;
+        }
         
-        // Update local job data
-        const jobIndex = this.jobs.findIndex(j => j.job_number === this.selectedJob.job_number)
+        console.log('Database update response:', data);
+        
+        // Update local job data with the returned data from database
+        const jobIndex = this.jobs.findIndex(j => j.job_number === this.selectedJob.job_number);
         if (jobIndex !== -1) {
-          // Create a new object to ensure reactivity
-          const updatedJob = { ...this.jobs[jobIndex], status, progress }
-          this.$set(this.jobs, jobIndex, updatedJob)
+          // Create a new array with the updated job to maintain reactivity
+          const updatedJobs = [...this.jobs];
+          updatedJobs[jobIndex] = { ...data };
+          this.jobs = updatedJobs;
           
           // Update selectedJob to reflect changes
-          this.selectedJob = updatedJob
+          this.selectedJob = { ...data };
+          
+          console.log('Local state updated:', {
+            updatedJob: data,
+            allJobs: this.jobs
+          });
         }
       } catch (error) {
         console.error('Error updating job:', error)
@@ -289,7 +329,7 @@ export default {
         const { data: jobs, error } = await supabase
           .from('jobs')
           .select('*')
-          .order('end_date', { ascending: false })
+          .order('date', { ascending: false })
         
         if (error) throw error
         
@@ -321,7 +361,7 @@ export default {
 }
 
 .container {
-  max-width: 1200px;
+  max-width: 1600px;
 }
 
 /* Right-align currency values */

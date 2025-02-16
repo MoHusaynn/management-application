@@ -59,7 +59,9 @@
             type="date"
             required
             class="mt-1 block w-full rounded-md border-gray-300 shadow-sm py-3 px-4 text-base"
+            :class="{ 'border-red-500': errors.date }"
           />
+          <p v-if="errors.date" class="mt-1 text-sm text-red-600">{{ errors.date }}</p>
         </div>
 
         <div>
@@ -68,9 +70,11 @@
             v-model="job.customer"
             type="text"
             required
-            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm py-3 px-4 text-base"
+            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm py-3 px-4 text-base focus:ring-red-500 focus:border-red-500"
+            :class="{ 'border-red-500': !job.customer }"
             placeholder="Start typing customer name..."
           />
+          <p v-if="errors.customer" class="mt-1 text-sm text-red-600">{{ errors.customer }}</p>
         </div>
 
         <div>
@@ -80,7 +84,9 @@
             type="date"
             required
             class="mt-1 block w-full rounded-md border-gray-300 shadow-sm py-3 px-4 text-base"
+            :class="{ 'border-red-500': errors.job_opening_day }"
           />
+          <p v-if="errors.job_opening_day" class="mt-1 text-sm text-red-600">{{ errors.job_opening_day }}</p>
         </div>
 
         <div>
@@ -102,8 +108,10 @@
             type="text"
             required
             class="mt-1 block w-full rounded-md border-gray-300 shadow-sm py-3 px-4 text-base"
+            :class="{ 'border-red-500': errors.location }"
             placeholder="Enter location or click to use current location"
           />
+          <p v-if="errors.location" class="mt-1 text-sm text-red-600">{{ errors.location }}</p>
         </div>
 
         <div>
@@ -139,8 +147,10 @@
             rows="3"
             required
             class="mt-1 block w-full rounded-md border-gray-300 shadow-sm py-3 px-4 text-base"
+            :class="{ 'border-red-500': errors.description }"
             placeholder="Brief description of the job"
           ></textarea>
+          <p v-if="errors.description" class="mt-1 text-sm text-red-600">{{ errors.description }}</p>
         </div>
       </div>
 
@@ -154,7 +164,9 @@
             min="1"
             required
             class="mt-1 block w-full rounded-md border-gray-300 shadow-sm py-3 px-4 text-base"
+            :class="{ 'border-red-500': errors.unit }"
           />
+          <p v-if="errors.unit" class="mt-1 text-sm text-red-600">{{ errors.unit }}</p>
         </div>
 
         <div>
@@ -165,7 +177,9 @@
             min="0"
             required
             class="mt-1 block w-full rounded-md border-gray-300 shadow-sm py-3 px-4 text-base"
+            :class="{ 'border-red-500': errors.material_expense }"
           />
+          <p v-if="errors.material_expense" class="mt-1 text-sm text-red-600">{{ errors.material_expense }}</p>
         </div>
 
         <div>
@@ -176,7 +190,9 @@
             min="0"
             required
             class="mt-1 block w-full rounded-md border-gray-300 shadow-sm py-3 px-4 text-base"
+            :class="{ 'border-red-500': errors.commissions_expense }"
           />
+          <p v-if="errors.commissions_expense" class="mt-1 text-sm text-red-600">{{ errors.commissions_expense }}</p>
         </div>
 
         <div>
@@ -187,7 +203,9 @@
             min="0"
             required
             class="mt-1 block w-full rounded-md border-gray-300 shadow-sm py-3 px-4 text-base"
+            :class="{ 'border-red-500': errors.man_power }"
           />
+          <p v-if="errors.man_power" class="mt-1 text-sm text-red-600">{{ errors.man_power }}</p>
         </div>
 
         <div>
@@ -198,7 +216,9 @@
             min="0"
             required
             class="mt-1 block w-full rounded-md border-gray-300 shadow-sm py-3 px-4 text-base"
+            :class="{ 'border-red-500': errors.paid }"
           />
+          <p v-if="errors.paid" class="mt-1 text-sm text-red-600">{{ errors.paid }}</p>
         </div>
 
         <div>
@@ -272,9 +292,10 @@ export default {
   },
   data() {
     return {
+      errors: {},
       job: {
-        job_number: 'JOB-0007',
-        invoice_number: 'INV-0007',
+        job_number: '',
+        invoice_number: '',
         date: new Date().toISOString().split('T')[0],
         job_opening_day: new Date().toISOString().split('T')[0],
         payment_type: 'Cash',
@@ -305,65 +326,150 @@ export default {
     }
   },
   methods: {
-    async generateJobNumber(sqlId) {
-      if (sqlId) {
-        this.job.job_number = `JOB-${String(sqlId).padStart(4, '0')}`
-        localStorage.setItem('lastJobNumber', this.job.job_number)
-      } else {
-        // Get last used number from localStorage or start from 0007
-        const lastNumber = localStorage.getItem('lastJobNumber') || 'JOB-0007'
-        this.job.job_number = lastNumber
+    async generateJobNumber() {
+      try {
+        console.log('Generating new job number...')
+        const nextNumber = await this.getNextNumber('job_number', 'JOB')
+        console.log('Setting job number to:', nextNumber)
+        this.job.job_number = nextNumber
+      } catch (error) {
+        console.error('Error in generateJobNumber:', error)
+        this.job.job_number = 'JOB-0001'
       }
     },
 
-    async incrementJobNumber() {
-      const lastNumber = localStorage.getItem('lastJobNumber') || 'JOB-0007'
-      const lastNum = parseInt(lastNumber.split('-')[1], 10)
-      const newNumber = `JOB-${String(lastNum + 1).padStart(4, '0')}`
-      localStorage.setItem('lastJobNumber', newNumber)
-      return newNumber
-    },
-    async generateInvoiceNumber(sqlId) {
-      if (sqlId) {
-        this.job.invoice_number = `INV-${String(sqlId).padStart(4, '0')}`
-        localStorage.setItem('lastInvoiceNumber', this.job.invoice_number)
-      } else {
-        // Get last used number from localStorage or start from 0007
-        const lastNumber = localStorage.getItem('lastInvoiceNumber') || 'INV-0007'
-        this.job.invoice_number = lastNumber
+    async generateInvoiceNumber() {
+      try {
+        console.log('Generating new invoice number...')
+        const nextNumber = await this.getNextNumber('invoice_number', 'INV')
+        console.log('Setting invoice number to:', nextNumber)
+        this.job.invoice_number = nextNumber
+      } catch (error) {
+        console.error('Error in generateInvoiceNumber:', error)
+        this.job.invoice_number = 'INV-0001'
       }
     },
 
-    async incrementInvoiceNumber() {
-      const lastNumber = localStorage.getItem('lastInvoiceNumber') || 'INV-0007'
-      const lastNum = parseInt(lastNumber.split('-')[1], 10)
-      const newNumber = `INV-${String(lastNum + 1).padStart(4, '0')}`
-      localStorage.setItem('lastInvoiceNumber', newNumber)
-      return newNumber
+    async getNextNumber(field, prefix) {
+      try {
+        console.log(`Getting next ${field}...`)
+        
+        // Get all jobs ordered by the number field in descending order
+        const { data: jobs, error } = await supabase
+          .from('jobs')
+          .select(field)
+          .order(field, { ascending: false })
+          .limit(1)
+
+        if (error) {
+          console.error(`Error getting ${field}:`, error)
+          return `${prefix}-0001`
+        }
+
+        // Log the result for debugging
+        console.log(`Latest ${field}:`, jobs?.[0]?.[field] || 'No records found')
+
+        if (jobs && jobs.length > 0) {
+          const lastNumber = jobs[0][field]
+          const currentNum = parseInt(lastNumber.split('-')[1], 10)
+          const nextNum = currentNum + 1
+          const nextNumber = `${prefix}-${String(nextNum).padStart(4, '0')}`
+          console.log(`Generated next ${field}:`, nextNumber)
+          return nextNumber
+        }
+
+        console.log(`No existing records, starting with ${prefix}-0001`)
+        return `${prefix}-0001`
+      } catch (error) {
+        console.error(`Error in getNextNumber for ${field}:`, error)
+        return `${prefix}-0001`
+      }
     },
+    validateForm() {
+      this.errors = {}
+      let isValid = true
+
+      // Check all required fields
+      const requiredFields = {
+        customer: 'Customer Name',
+        mobile: 'Mobile Number',
+        location: 'Location',
+        date: 'Date',
+        job_opening_day: 'Job Opening Day',
+        description: 'Description',
+        unit: 'Unit',
+        material_expense: 'Material Expense',
+        man_power: 'Manpower Cost',
+        commissions_expense: 'Commissions Expense',
+        paid: 'Paid Amount'
+      }
+
+      for (const [field, label] of Object.entries(requiredFields)) {
+        if (!this.job[field] && this.job[field] !== 0) {
+          this.errors[field] = `${label} is required`
+          isValid = false
+        }
+      }
+
+      // Validate numeric fields are not negative
+      const numericFields = {
+        unit: 'Unit',
+        material_expense: 'Material Expense',
+        man_power: 'Manpower Cost',
+        commissions_expense: 'Commissions Expense',
+        paid: 'Paid Amount'
+      }
+
+      for (const [field, label] of Object.entries(numericFields)) {
+        if (this.job[field] < 0) {
+          this.errors[field] = `${label} cannot be negative`
+          isValid = false
+        }
+      }
+
+      // Validate mobile number format
+      if (!/^\d{10}$/.test(this.job.mobile)) {
+        this.errors.mobile = 'Mobile number must be 10 digits'
+        isValid = false
+      }
+
+      // Validate dates
+      const currentDate = new Date().toISOString().split('T')[0]
+      if (this.job.date > currentDate) {
+        this.errors.date = 'Date cannot be in the future'
+        isValid = false
+      }
+      if (this.job.job_opening_day < this.job.date) {
+        this.errors.job_opening_day = 'Job Opening Day cannot be before Date'
+        isValid = false
+      }
+
+      if (!isValid) {
+        throw new Error('Please fix the validation errors')
+      }
+    },
+
     async submitForm() {
       try {
-        // Validate required fields
-        if (!this.job.customer || !this.job.mobile || !this.job.location) {
-          throw new Error('Please fill all required fields')
-        }
+        // Validate all fields
+        this.validateForm()
 
-        // Validate mobile number format
-        if (!/^\d{10}$/.test(this.job.mobile)) {
-          throw new Error('Mobile number must be 10 digits')
-        }
-
-        const { data: insertData, error } = await supabase
+        // Save current job
+        const { error: saveError } = await supabase
           .from('jobs')
-          .insert([this.job])
-          .select()
+          .insert([{
+            ...this.job,
+            total_expense: this.totalExpense,
+            total_amount: this.totalAmount,
+            balance: this.balance
+          }])
         
-        if (error) throw error
-        
-        // Update job and invoice numbers
-        this.job.job_number = await this.incrementJobNumber()
-        this.job.invoice_number = await this.incrementInvoiceNumber()
-        
+        if (saveError) throw saveError
+
+        // Get next numbers
+        const nextJobNumber = await this.getNextNumber('job_number', 'JOB')
+        const nextInvoiceNumber = await this.getNextNumber('invoice_number', 'INV')
+
         // Show success notification
         this.notify({
           group: 'default',
@@ -371,8 +477,28 @@ export default {
           text: 'Job created successfully',
           type: 'success'
         })
-        
-        this.resetForm()
+
+        // Reset form with new numbers
+        this.job = {
+          job_number: nextJobNumber,
+          invoice_number: nextInvoiceNumber,
+          date: new Date().toISOString().split('T')[0],
+          job_opening_day: new Date().toISOString().split('T')[0],
+          payment_type: 'Cash',
+          contract_type: 'Contract',
+          customer: '',
+          mobile: '',
+          location: '',
+          job_type: 'Installation',
+          quality: 'Standard',
+          description: '',
+          unit: 1,
+          material_expense: 0,
+          man_power: 0,
+          commissions_expense: 0,
+          paid: 0
+        }
+
         this.$router.push('/jobs')
       } catch (error) {
         console.error('Error submitting job:', error)
@@ -386,12 +512,25 @@ export default {
         })
       }
     },
-    async resetForm() {
-      await this.generateJobNumber()
-      await this.generateInvoiceNumber()
+    async resetForm(newJobNumber = null, newInvoiceNumber = null) {
+      let jobNumber, invoiceNumber;
+      
+      if (newJobNumber && newInvoiceNumber) {
+        // Use provided numbers (after submission)
+        jobNumber = newJobNumber;
+        invoiceNumber = newInvoiceNumber;
+      } else {
+        // Generate new numbers (for manual reset)
+        await this.generateJobNumber();
+        await this.generateInvoiceNumber();
+        jobNumber = this.job.job_number;
+        invoiceNumber = this.job.invoice_number;
+      }
+
+      // Reset form with appropriate numbers
       this.job = {
-        job_number: this.job.job_number,
-        invoice_number: this.job.invoice_number,
+        job_number: jobNumber,
+        invoice_number: invoiceNumber,
         date: new Date().toISOString().split('T')[0],
         job_opening_day: new Date().toISOString().split('T')[0],
         payment_type: 'Cash',
@@ -408,9 +547,39 @@ export default {
         commissions_expense: 0,
         paid: 0
       }
+    },
+
+    async checkDatabaseConnection() {
+      try {
+        // Try to fetch a single record from the jobs table
+        const { data, error } = await supabase
+          .from('jobs')
+          .select('id')
+          .limit(1)
+
+        if (error) {
+          console.error('❌ Database connection failed:', error.message)
+          return false
+        }
+
+        console.log('✅ Database connected successfully!')
+        console.log('Database connection details:', {
+          timestamp: new Date().toISOString(),
+          status: 'connected',
+          table: 'jobs',
+          testQuery: 'successful'
+        })
+        return true
+      } catch (error) {
+        console.error('❌ Database connection error:', error.message)
+        return false
+      }
     }
   },
   async created() {
+    // Check database connection
+    await this.checkDatabaseConnection()
+    
     // Only generate new numbers if starting fresh job
     if (!this.job.job_number) {
       await this.generateJobNumber()

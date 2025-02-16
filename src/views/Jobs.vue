@@ -136,7 +136,7 @@ export default {
         startDate: '',
         endDate: ''
       },
-      statusOptions: ['Pending', 'In Progress', 'Completed'],
+      statusOptions: ['Pending', 'Active', 'Completed'],
       currentPage: 1,
       itemsPerPage: 10
     }
@@ -192,7 +192,7 @@ export default {
       return {
         'px-2 py-1 rounded-full text-sm': true,
         'bg-yellow-100 text-yellow-800': status === 'Pending',
-        'bg-blue-100 text-blue-800': status === 'In Progress',
+        'bg-blue-500 text-white': status === 'Active',
         'bg-green-100 text-green-800': status === 'Completed'
       }
     },
